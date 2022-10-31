@@ -352,4 +352,23 @@ class JsonObjectTest {
         }
     }
 
+    @Test
+    @DisplayName("joined data uniqueness for objects")
+    void test023() throws JsonFormatException {
+        String jsonString = "{" +
+                "\"object\":{}," +
+                "\"array\":[]," +
+                "\"string\":\"\"" +
+                ",\"long\":1," +
+                "\"double\":1.1," +
+                "\"boolean\":true" +
+                "}";
+        JsonObject object1 = JsonParser.parseObjectString(jsonString);
+        JsonObject object2 = new JsonObject();
+        object2.join(object1);
+        assertNotSame(object1.get("object"), object2.get("object"),
+                "join() should create new JsonObjects, rather than copy object references."
+        );
+    }
+
 }
