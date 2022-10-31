@@ -2,6 +2,7 @@ package org.jsonutils;
 
 import java.io.Serial;
 import java.util.EmptyStackException;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
@@ -256,18 +257,28 @@ public class JsonObject extends ConcurrentHashMap<String, Object>{
         return currentData;
     }
 
-    public void join(JsonObject other) {
-        for (String key : other.keySet()) {
-            Object value = other.get(key);
-            if (value instanceof JsonObject) {
-                Object thisValue = get(key);
-                if (thisValue instanceof JsonObject) {
-                    ((JsonObject) thisValue).join((JsonObject) value);
+    public void join(JsonObject other) throws JsonFormatException {
+        for (Map.Entry<String, Object> otherEntry : other.entrySet()) {
+            String key = otherEntry.getKey();
+            Object value = otherEntry.getValue();
+            if (value instanceof JsonObject otherJsonObject) {
+                /*
+                 * Nested objects need to have a deep join performed. Any collisions between original values and new
+                 * values cause the old values to be overwritten.
+                 */
+                Object thisValue = this.get(key);
+                if (thisValue instanceof JsonObject thisJsonObject) {
+                    // Perform a deep join if this has a JsonObject at the specified key.
+                    thisJsonObject.join(otherJsonObject);
                 } else {
-                    put(key, value);
+                    // Overwrite any previous value if this does not have a JsonObject at the specified key.
+                    this.put(key, JsonParser.parseObjectString(otherJsonObject.toString()));
                 }
             } else {
-                put(key, value);
+                /*
+                 * All non-JsonObject values (including JsonArrays) are overwritten during a join.
+                 */
+                this.put(key, value);
             }
         }
     }
