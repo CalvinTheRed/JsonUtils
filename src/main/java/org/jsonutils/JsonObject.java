@@ -257,7 +257,7 @@ public class JsonObject extends ConcurrentHashMap<String, Object>{
         return currentData;
     }
 
-    public void join(JsonObject other) throws JsonFormatException {
+    public void join(JsonObject other) {
         for (Map.Entry<String, Object> otherEntry : other.entrySet()) {
             String key = otherEntry.getKey();
             Object value = otherEntry.getValue();
@@ -272,7 +272,15 @@ public class JsonObject extends ConcurrentHashMap<String, Object>{
                     thisJsonObject.join(otherJsonObject);
                 } else {
                     // Overwrite any previous value if this does not have a JsonObject at the specified key.
-                    this.put(key, JsonParser.parseObjectString(otherJsonObject.toString()));
+                    try {
+                        this.put(key, JsonParser.parseObjectString(otherJsonObject.toString()));
+                    } catch (JsonFormatException e) {
+                        // This should never occur...
+                        throw new RuntimeException(
+                                "An error occurred trying to perform JsonObject.join(...). This error should never occur.",
+                                e
+                        );
+                    }
                 }
             } else {
                 /*
